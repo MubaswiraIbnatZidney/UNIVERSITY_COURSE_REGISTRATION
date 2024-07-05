@@ -1,0 +1,67 @@
+body {
+    background-image: url('images/databack.jpg'); 
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+.bottom-navbar {
+    margin: 0;
+    padding: 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    background-color:transparent;
+    padding: 10px;
+}
+
+.button-link {
+    margin: 0;
+    padding: 0;
+    text-decoration: none;
+    color: #fff;
+    background-color: transparent; 
+    padding: 10px 20px;
+    border-radius: 5px;
+}
+.button-link-left{
+    margin: 0;
+    padding: 0;
+    text-decoration: none;
+    color: #fff; 
+    background-color:#007bff; 
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+
+
+}
+.button-link-right{
+    margin: 0;
+    padding: 0;
+    text-decoration: none;
+    color: #fff; 
+    background-color:red; 
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin-left: auto;
+    cursor: pointer;
+
+}
+
+
+.button-link:nth-child(1) {
+    /* Bottom Left Button */
+    margin: 0;
+    padding: 0;
+    margin-left: 10px;
+}
+
+.button-link:nth-child(2) {
+   
+    margin: 0;
+    padding: 0;
+    margin-right: 10px;
+}

@@ -1,60 +1,80 @@
 <?php
-    include("connection.php");
-    if(isset($_POST['sub'])){
+include("connection.php");
 
-        $title = mysqli_real_escape_string($conn, $_POST['title']);
-        $credit = mysqli_real_escape_string($conn, $_POST['credit']);
-        $department = mysqli_real_escape_string($conn, $_POST['department']);
-        $no_of_seats = mysqli_real_escape_string($conn, $_POST['no_of_seats']);
-        $CheckIn = mysqli_real_escape_string($conn, $_POST['CheckIn']);
-        $CheckOut = mysqli_real_escape_string($conn, $_POST['CheckOut']);
-        $dept_ID = mysqli_real_escape_string($conn, $_POST['dept_ID']);
-        $Instructor_ID = mysqli_real_escape_string($conn, $_POST['Instructor_ID']);
-        $semester = mysqli_real_escape_string($conn, $_POST['semester']);
+class CourseManager {
+    private $conn;
 
-        /*$sql="select * from student where FirstName='$firstname'";
-        $sql="select * from student where LastName='$lastname'";
-        $sql="select * from student where Address='$address'";
-        $sql="select * from student where Email='$mail'";
-        $sql="select * from student where department='$dept'";
-        $sql="select * from student where semester='$semester'";
-        $sql="select * from student where cgpa='$cgpa'";*/
+    public function __construct($conn) {
+        $this->conn = $conn;
+    }
 
-         $sql = "SELECT * FROM course WHERE title='$title'";
-        //echo $sql;
-
-
-        
-        $result = mysqli_query($conn, $sql);
-        $count_user = mysqli_num_rows($result);
-
-
-                if($count_user == 0 ){
-                $sql = "INSERT INTO course(title, credit, department, semester, no_of_seats, CheckIn, CheckOut, dept_ID, Instructor_ID ) VALUES('$title', '$credit', '$department', '$semester', '$no_of_seats', '$CheckIn', '$CheckOut', '$dept_ID', '$Instructor_ID' )";
-                
-                $result = mysqli_query($conn, $sql);
-
-                    if($result){
-                        echo '<script>
-                        window.location.href="course.php";
-                        alert("Course Added Successfully!!");
-                    </script>';
-                    }
-                }
-
-                else{
-                    if($count_user>0){
-                        echo '<script>
-                            window.location.href="course.php";
-                            alert("Course Already Exists!!");
-                        </script>';
-                    }   
-                }
+    public function handleCourseSubmission() {
+        if (isset($_POST['sub'])) {
+            $courseData = $this->sanitizeInputData($_POST);
+            if ($this->isCourseExist($courseData['title'])) {
+                $this->redirectWithMessage("Course Already Exists!!");
+            } else {
+                $this->addCourse($courseData);
+                $this->redirectWithMessage("Course Added Successfully!!");
+            }
         }
+    }
 
-        
-    
+    private function sanitizeInputData($data) {
+        return [
+            'title' => mysqli_real_escape_string($this->conn, $data['title']),
+            'credit' => mysqli_real_escape_string($this->conn, $data['credit']),
+            'department' => mysqli_real_escape_string($this->conn, $data['department']),
+            'no_of_seats' => mysqli_real_escape_string($this->conn, $data['no_of_seats']),
+            'CheckIn' => mysqli_real_escape_string($this->conn, $data['CheckIn']),
+            'CheckOut' => mysqli_real_escape_string($this->conn, $data['CheckOut']),
+            'dept_ID' => mysqli_real_escape_string($this->conn, $data['dept_ID']),
+            'Instructor_ID' => mysqli_real_escape_string($this->conn, $data['Instructor_ID']),
+            'semester' => mysqli_real_escape_string($this->conn, $data['semester'])
+        ];
+    }
+
+    private function isCourseExist($title) {
+        $sql = "SELECT * FROM course WHERE title = ?";
+        $stmt = mysqli_prepare($this->conn, $sql);
+        mysqli_stmt_bind_param($stmt, "s", $title);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        return mysqli_num_rows($result) > 0;
+    }
+
+    private function addCourse($courseData) {
+        $sql = "INSERT INTO course (title, credit, department, semester, no_of_seats, CheckIn, CheckOut, dept_ID, Instructor_ID) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = mysqli_prepare($this->conn, $sql);
+        mysqli_stmt_bind_param(
+            $stmt, "sssssssss", 
+            $courseData['title'], 
+            $courseData['credit'], 
+            $courseData['department'], 
+            $courseData['semester'], 
+            $courseData['no_of_seats'], 
+            $courseData['CheckIn'], 
+            $courseData['CheckOut'], 
+            $courseData['dept_ID'], 
+            $courseData['Instructor_ID']
+        );
+        mysqli_stmt_execute($stmt);
+    }
+
+    private function redirectWithMessage($message) {
+        echo '<script>
+                window.location.href="course.php";
+                alert("' . $message . '");
+              </script>';
+        exit;
+    }
+}
+
+$courseManager = new CourseManager($conn);
+$courseManager->handleCourseSubmission();
 ?>
+
 
 
 

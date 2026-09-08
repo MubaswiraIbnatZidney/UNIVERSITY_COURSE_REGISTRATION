@@ -1,17 +1,5 @@
 <?php
-// Establishing a connection to the database
-$servername = 'localhost';
-$username = 'root';
-$password = '';
-$dbname = 'db';
-
-// Creating a connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Checking the connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+include('connection.php');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $course_id = $_POST['course_id'];
@@ -22,20 +10,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $CheckIn = $_POST['CheckIn'];
     $CheckOut = $_POST['CheckOut'];
 
-    $sql = "UPDATE course SET title='$title', credit=$credit, department='$department',no_of_seats='$no_of_seats',CheckIn='$CheckIn',CheckOut='$CheckOut' WHERE course_id=$course_id";
+    $sql = "UPDATE course SET title=?, credit=?, department=?, no_of_seats=?, CheckIn=?, CheckOut=? WHERE course_id=?";
+    $stmt = $conn->prepare($sql);
 
-    if ($conn->query($sql) === TRUE) {
-        //  echo "Record updated successfully";
-        echo '<script>
-                 window.location.href="courseData.php";
-                 alert("Course Updated Successfully!!");
-             </script>';
+    if ($stmt) {
+        $stmt->bind_param("sisissi", $title, $credit, $department, $no_of_seats, $CheckIn, $CheckOut, $course_id);
+
+        if ($stmt->execute()) {
+            echo '<script>
+                     window.location.href="courseData.php";
+                     alert("Course Updated Successfully!!");
+                 </script>';
+        } else {
+            echo "Error updating record: " . $stmt->error;
+        }
+        $stmt->close();
+    } else {
+        echo "Error preparing statement: " . $conn->error;
     }
-} else {
-    echo "Error updating record: " . $conn->error;
 }
-
-
-
-$conn->close();
 ?>

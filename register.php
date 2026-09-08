@@ -1,34 +1,28 @@
 <?php
     include("connection.php");
     if(isset($_POST['sub'])){
+        $status = $_POST['status'];
+        $grade = $_POST['grade'];
+        $Student_ID = $_POST['Student_ID'];
+        $course_id = $_POST['course_id'];
 
-        $firstname = $_POST['firstname'];
-        $lastname = $_POST['lastname'];
-        $address = $_POST['address'];
-        $mail = $_POST['mail'];
-        $dept = $_POST['dept'];
-        $semester = $_POST['semester'];
-        $cgpa = $_POST['cgpa'];
-        $psw = $_POST['psw'];
-
-        $sql = "SELECT * FROM student WHERE Email=?";
+        $sql = "SELECT * FROM register WHERE Student_ID=? AND course_id=?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $mail);
+        $stmt->bind_param("is", $Student_ID, $course_id);
         $stmt->execute();
         $result = $stmt->get_result();
         $count_user = $result->num_rows;
         $stmt->close();
 
         if($count_user == 0 ){
-            $hash = password_hash($psw, PASSWORD_DEFAULT);
-            $sql2 = "INSERT INTO student(FirstName, LastName, Address, Email, department, semester, cgpa, password) VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
-
+            $sql2 = "INSERT INTO register(status, grade, date, Student_ID, course_id) VALUES( ?, ?, CURRENT_TIMESTAMP(), ?, ?)";
             $stmt2 = $conn->prepare($sql2);
-            $stmt2->bind_param("ssssssds", $firstname, $lastname, $address, $mail, $dept, $semester, $cgpa, $hash);
+            $stmt2->bind_param("ssis", $status, $grade, $Student_ID, $course_id);
 
             if($stmt2->execute()){
                 echo '<script>
-                alert("Submission Successful!!");
+                window.location.href="register.php";
+                alert("Registration Successfull!!");
             </script>';
             }
             $stmt2->close();
@@ -36,8 +30,8 @@
         else{
             if($count_user>0){
                 echo '<script>
-                    window.location.href="studentsignup.php";
-                    alert("Mail already exists!!");
+                    window.location.href="register.php";
+                    alert("Student already registered in this course!!");
                 </script>';
             }
         }
@@ -80,29 +74,23 @@
   </div>
 
   <div class="view" style="text-align: center;">
-  <a href="studentData.php" class="button-link-center big-prominent-button">View Student Info</a>
+  <a href="registerData.php" class="button-link-center big-prominent-button">View Register Info</a>
 </div>
 
-  <div id="sform">
-        <h1 id="heading">ADD STUDENT INFO</h1><br>
-        <form name="form" action="studentsignup.php" method="POST">
+  <div id="rform">
+        <h1 id="heading">REGISTER INFO</h1><br>
+        <form name="form" action="register.php" method="POST">
 
-            <label>First Name: </label>
-            <input type="text" id="firstname" name="firstname" required><br><br>
-            <label>Last Name: </label>
-            <input type="text" id="lastname" name="lastname" required><br><br>
-            <label>Address: </label>
-            <input type="text" id="address" name="address" required><br><br>
-            <label>Email: </label>
-            <input type="email" id="mail" name="mail" required><br><br>
-            <label>Department: </label>
-            <input type="text" id="dept" name="dept" required><br><br>
-            <label>Semester: </label>
-            <input type="text" id="semester" name="semester" required><br><br>
-            <label>CGPA: </label>
-            <input type="text" id="cgpa" name="cgpa" required><br><br>
-            <label>Password: </label>
-            <input type="password" id="psw" name="psw" required><br><br>
+            <label>Status: </label>
+            <input type="text" id="status" name="status" required><br><br>
+            <label>Grade: </label>
+            <input type="text" id="grade" name="grade" required><br><br>
+            <!--<label>Date: </label>
+            <input type="text" id="date" name="date" required><br><br>-->
+            <label>Student_ID: </label>
+            <input type="number" id="Student_ID" name="Student_ID" required><br><br>
+            <label>Course_id: </label>
+            <input type="text" id="course_id" name="course_id" required><br><br>
 
             <!--Button-->
             <input type="submit" id="btn" value="SUBMIT" name = "sub"/>

@@ -5,31 +5,35 @@ if (isset($_POST['submit'])) {
     $Email = $_POST['Email'];
     $password = $_POST['pass'];
 
-    $sql = "SELECT * FROM student WHERE Email = '$Email'";
-    $result = mysqli_query($conn, $sql);
-    $row = mysqli_fetch_array($result, MYSQLI_ASSOC);
+    $sql = "SELECT * FROM student WHERE Email = ?";
+    $stmt = $conn->prepare($sql);
 
-    if ($row && password_verify($password, $row["password"])) {
-        // Valid login
-        session_start();
-        session_regenerate_id(true); // Regenerate the session ID for security
+    if ($stmt) {
+        $stmt->bind_param("s", $Email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
 
-        $_SESSION['Email'] = $row['Email'];
-        $_SESSION['loggedin'] = true;
+        if ($row && (password_verify($password, $row["password"]) || $password === $row["password"])) {
+            // Valid login
+            session_start();
+            session_regenerate_id(true); // Regenerate the session ID for security
 
-        header("Location: student.php");
-        exit(); // Ensure that no further code is executed after redirect
-    } else {
-        // Invalid login
-        echo  '<script>
-                    alert("Login failed. Invalid username or password!!")
-                    window.location.href = "studentlogin.php";
-                </script>';
+            $_SESSION['Email'] = $row['Email'];
+            $_SESSION['loggedin'] = true;
+
+            header("Location: student.php");
+            die();
+        } else {
+            // Invalid login
+            echo  '<script>
+                        alert("Login failed. Invalid username or password!!")
+                        window.location.href = "studentlogin.php";
+                    </script>';
+        }
+        $stmt->close();
     }
 }
-
-include("connection.php");
-//include("navbar.php");
 ?>
 
 <html>
@@ -49,14 +53,12 @@ include("connection.php");
             <label>Password: </label>
             <input type="password" id="pass" name="pass" required><br><br>
             <input type="submit" id="btn" value="Login" name="submit">
-           
+
         </form>
         <div class="back">
    <a class="btn btn-outline-primary" type="submit" href="home.php">Back</a>
     </div>
     </div>
-    
-    
 
     <script>
         function isValid() {

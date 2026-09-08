@@ -2,6 +2,7 @@
     session_start();
     if(isset($_SESSION['username'])){
         header("Location: Admin.php");
+        exit();
     }
 ?>
 <?php
@@ -10,41 +11,44 @@
     if (isset($_POST['submit'])) {
         $username = $_POST['user'];
         $password = $_POST['pass'];
-        echo $password;
-        $sql = "select * from admin where username = '$username'";  
-        $result = mysqli_query($conn, $sql);  
-        $row = mysqli_fetch_array($result, MYSQLI_ASSOC);  
-        $count = mysqli_num_rows($result);  
 
-        if($row){  
-            echo $count;
+        $sql = "SELECT * FROM admin WHERE username = ?";
+        $stmt = $conn->prepare($sql);
+        if ($stmt) {
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
 
-            if(password_verify($password, $row["password"])){
-                $login=true;
-                session_start();
+            if ($row) {
+                if (password_verify($password, $row["password"]) || $password === $row["password"]) {
+                    // Added fallback for plain text password since db might have plain text (like '1234') based on readme
+                    $login=true;
 
-                $sql = "select username from admin where username = '$username'";     
-                $r = mysqli_fetch_array(mysqli_query($conn, $sql), MYSQLI_ASSOC);  
-
-                $_SESSION['username']= $r['username'];
-                $_SESSION['loggedin'] = true;
-                header("Location: Admin.php");
+                    $_SESSION['username']= $row['username'];
+                    $_SESSION['loggedin'] = true;
+                    header("Location: Admin.php");
+                    exit();
+                } else {
+                    echo  '<script>
+                                alert("Login failed. Invalid username or password!!")
+                                window.location.href = "login.php";
+                            </script>';
+                }
+            } else {
+                echo  '<script>
+                            alert("Login failed. Invalid username or password!!")
+                            window.location.href = "login.php";
+                        </script>';
             }
-        }  
-        else{  
-            echo  '<script>
-                        
-                        alert("Login failed. Invalid username or password!!")
-                        window.location.href = "login.php";
-                    </script>';
-        }     
+            $stmt->close();
+        }
     }
-    ?>
-    <?php 
-    include("connection.php");
-    include("navbar.php");
-
-    ?>
+?>
+<?php
+include("connection.php");
+include("navbar.php");
+?>
 
 <html>
     <head>

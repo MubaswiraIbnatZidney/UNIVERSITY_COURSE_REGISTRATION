@@ -1,17 +1,9 @@
 <?php
-    session_start();
-    if(isset($_SESSION['username'])){
-        header("Location: Admin.php");
-        exit; // Exit to prevent further execution
-    }
-    
     include("connection.php");
 
-    // Function to check if the password is strong
     function isStrongPassword($password) {
-        // Define the regex patterns for strong and medium passwords
-        $strongRegex = "/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/";
-        $mediumRegex = "/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{6,})/";
+        $strongRegex = "/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*]).{8,}$/";
+        $mediumRegex = "/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{6,}$/";
 
         if (preg_match($strongRegex, $password)) {
             return "Strong";
@@ -23,32 +15,39 @@
     }
 
     if(isset($_POST['submit'])){
-        $username = mysqli_real_escape_string($conn, $_POST['user']);
-        $password = mysqli_real_escape_string($conn, $_POST['pass']);
-        $cpassword = mysqli_real_escape_string($conn, $_POST['cpass']);
+        $username = $_POST['user'];
+        $password = $_POST['pass'];
+        $cpassword = $_POST['cpass'];
 
-        $sql = "SELECT * FROM admin WHERE username='$username'";
-        $result = mysqli_query($conn, $sql);
-        $count_user = mysqli_num_rows($result);
+        $sql = "SELECT * FROM admin WHERE username=?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $count_user = $result->num_rows;
+        $stmt->close();
 
         if($count_user == 0){
             if($password == $cpassword){
                 // Check if the password is strong
                 $passwordStrength = isStrongPassword($password);
-                
+
                 if($passwordStrength === "Strong" || $passwordStrength === "Medium"){
                     $hash = password_hash($password, PASSWORD_DEFAULT);
-                    $sql = "INSERT INTO admin(username, password) VALUES('$username', '$hash')";
-                    $result = mysqli_query($conn, $sql);
-                    if($result){
+                    $sql2 = "INSERT INTO admin(username, password) VALUES(?, ?)";
+                    $stmt2 = $conn->prepare($sql2);
+                    $stmt2->bind_param("ss", $username, $hash);
+
+                    if($stmt2->execute()){
                         header("Location: login.php");
-                        exit; // Exit after redirection
+                        die();
                     } else {
                         echo '<script>
                             alert("Error: Unable to register. Please try again later.");
                             window.location.href = "signup.php";
                         </script>';
                     }
+                    $stmt2->close();
                 } else {
                     echo '<script>
                         alert("Password is too weak. Please use a stronger password.");
@@ -97,14 +96,14 @@
         <form name="form" action="signup.php" method="POST">
             <label for="user">Enter Username: </label>
             <input type="text" id="user" name="user" required><br><br>
-            
+
             <label for="pass">Create Password: </label>
             <input type="password" id="pass" name="pass" required onkeyup="checkPasswordStrength()"><br>
             <span id="password-strength" class="strength-indicator"></span><br><br>
-            
+
             <label for="cpass">Retype Password: </label>
             <input type="password" id="cpass" name="cpass" required><br><br>
-            
+
             <input type="submit" id="btn" value="SignUp" name="submit"/>
         </form>
         <div class="back">

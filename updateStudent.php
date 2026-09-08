@@ -1,17 +1,5 @@
 <?php
-// Establishing a connection to the database
-$servername = 'localhost';
-$username = 'root';
-$password = '';
-$dbname = 'db';
-
-// Creating a connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Checking the connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+include('connection.php');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $Student_ID = $_POST['Student_ID'];
@@ -23,20 +11,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $semester = $_POST['semester'];
     $cgpa = $_POST['cgpa'];
 
-    $sql = "UPDATE student SET FirstName='$FirstName', LastName='$LastName', Address='$Address',Email='$Email',department='$department',semester='$semester',cgpa='$cgpa' WHERE Student_ID=$Student_ID";
+    $sql = "UPDATE student SET FirstName=?, LastName=?, Address=?, Email=?, department=?, semester=?, cgpa=? WHERE Student_ID=?";
+    $stmt = $conn->prepare($sql);
 
-    if ($conn->query($sql) === TRUE) {
-        //  echo "Record updated successfully";
-        echo '<script>
-                 window.location.href="studentData.php";
-                 alert("Student info Updated Successfully!!");
-             </script>';
+    if ($stmt) {
+        $stmt->bind_param("ssssssdi", $FirstName, $LastName, $Address, $Email, $department, $semester, $cgpa, $Student_ID);
+
+        if ($stmt->execute()) {
+            echo '<script>
+                     window.location.href="studentData.php";
+                     alert("Student info Updated Successfully!!");
+                 </script>';
+        } else {
+            echo "Error updating record: " . $stmt->error;
+        }
+        $stmt->close();
+    } else {
+        echo "Error preparing statement: " . $conn->error;
     }
-} else {
-    echo "Error updating record: " . $conn->error;
 }
-
-
-
-$conn->close();
 ?>
